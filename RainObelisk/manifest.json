@@ -1,0 +1,10 @@
+﻿{
+  "Name": "Rain Obelisk",
+  "Author": "Tlitookilakin",
+  "Version": "1.0.0",
+  "Description": "Adds a rain obelisk.",
+  "UniqueID": "tlitookilakin.RainObelisk",
+  "EntryDll": "RainObelisk.dll",
+  "MinimumApiVersion": "3.13",
+  "UpdateKeys": [ "Nexus:" ]
+}
