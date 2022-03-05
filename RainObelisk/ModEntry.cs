@@ -1,24 +1,22 @@
-﻿using HarmonyLib;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.GameData;
 using System;
-using System.Reflection;
 
 namespace RainObelisk
 {
     public class ModEntry : Mod, IAssetLoader, IAssetEditor
     {
         private ITranslationHelper i18n => Helper.Translation;
-        private static FieldInfo mp;
+        private IReflectedField<Multiplayer> mp;
 
         public override void Entry(IModHelper helper)
         {
             Monitor.Log("Starting up...", LogLevel.Debug);
             GameLocation.RegisterTileAction("UseRainObelisk", (loc, args, who, pos) => SetRain(loc, who.Position));
-            mp = AccessTools.Field(typeof(Game1), "multiplayer");
+            mp = Helper.Reflection.GetField<Multiplayer>(typeof(Game1), "multiplayer");
         }
         public bool CanLoad<T>(IAssetInfo asset)
         {
@@ -72,19 +70,9 @@ namespace RainObelisk
             Game1.screenGlow = false;
             where.playSound("thunder");
             Game1.screenGlowOnce(Color.SlateBlue, hold: false);
-            Multiplayer multiplayer = null;
-            try
-            {
-                multiplayer = (Multiplayer)mp.GetValue(Game1.game1);
-            }
-            catch (Exception e)
-            {
-                Monitor.Log("Could not retrieve multiplayer instance!", LogLevel.Warn);
-                Monitor.Log(e.ToString(), LogLevel.Warn);
-            }
             for (int i = 0; i < 6; i++)
             {
-                multiplayer?.broadcastSprites(where, new TemporaryAnimatedSprite("LooseSprites\\Cursors", new Rectangle(648, 1045, 52, 33), 9999f, 1, 999, pos + new Vector2(0f, -128f), flicker: false, flipped: false, 1f, 0.01f, Color.White * 0.8f, 2f, 0.01f, 0f, 0f)
+                mp?.GetValue()?.broadcastSprites(where, new TemporaryAnimatedSprite("LooseSprites\\Cursors", new Rectangle(648, 1045, 52, 33), 9999f, 1, 999, pos + new Vector2(0f, -128f), flicker: false, flipped: false, 1f, 0.01f, Color.White * 0.8f, 2f, 0.01f, 0f, 0f)
                 {
                     motion = new Vector2((float)Game1.random.Next(-10, 11) / 10f, -2f),
                     delayBeforeAnimationStart = i * 200
