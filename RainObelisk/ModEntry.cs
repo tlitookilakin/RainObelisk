@@ -1,5 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.GameData;
@@ -7,38 +9,32 @@ using System;
 
 namespace RainObelisk
 {
-    public class ModEntry : Mod, IAssetLoader, IAssetEditor
+    public class ModEntry : Mod
     {
         private ITranslationHelper i18n => Helper.Translation;
         private IReflectedField<Multiplayer> mp;
 
         public override void Entry(IModHelper helper)
         {
-            Monitor.Log("Starting up...", LogLevel.Debug);
+            Monitor.Log("Starting up...", LogLevel.Trace);
             GameLocation.RegisterTileAction("UseRainObelisk", (loc, args, who, pos) => SetRain(loc, who.Position));
             mp = Helper.Reflection.GetField<Multiplayer>(typeof(Game1), "multiplayer");
+            helper.Events.Content.AssetRequested += (object _, AssetRequestedEventArgs ev) =>
+            {
+                if (ev.NameWithoutLocale.IsEquivalentTo("Mods/RainObelisk/Default"))
+                    ev.LoadFromModFile<Texture2D>("assets/Obelisk.png", AssetLoadPriority.Low);
+                else if (ev.NameWithoutLocale.IsEquivalentTo("Data/BuildingsData"))
+                    ev.Edit(AddBuilding);
+            };
         }
-        public bool CanLoad<T>(IAssetInfo asset)
-        {
-            return asset.Name.IsEquivalentTo("Buildings/RainObelisk");
-        }
-
-        public T Load<T>(IAssetInfo asset)
-        {
-            return Helper.Content.Load<T>("assets/Obelisk.png");
-        }
-        public bool CanEdit<T>(IAssetInfo asset)
-        {
-            return asset.Name.IsEquivalentTo("Data/BuildingsData");
-        }
-        public void Edit<T>(IAssetData asset)
+        private void AddBuilding(IAssetData asset)
         {
             var data = asset.AsDictionary<string, BuildingData>().Data;
             data.Add("tlitookilakin.rainObelisk", new()
             {
                 Name = i18n.Get("buildings.obelisk.name"),
                 Description = i18n.Get("buildings.obelisk.desc"),
-                Texture = PathUtilities.NormalizeAssetName("Buildings/RainObelisk"),
+                Texture = PathUtilities.NormalizeAssetName("Mods/RainObelisk/Default"),
                 Builder = "Wizard",
                 BuildCost = 500_000,
                 BuildMaterials = new()
