@@ -18,6 +18,7 @@ namespace RainObelisk
         {
             Monitor.Log("Starting up...", LogLevel.Trace);
             GameLocation.RegisterTileAction("UseRainObelisk", (loc, args, who, pos) => SetRain(loc, who.Position));
+            GameStateQuery.RegisterQueryType("LOCATION_RAIN_TOTEM_ALLOWED", RainTotemAllowedHere);
             mp = Helper.Reflection.GetField<Multiplayer>(typeof(Game1), "multiplayer");
             helper.Events.Content.AssetRequested += (object _, AssetRequestedEventArgs ev) =>
             {
@@ -35,6 +36,7 @@ namespace RainObelisk
                 Name = i18n.Get("buildings.obelisk.name"),
                 Description = i18n.Get("buildings.obelisk.desc"),
                 Texture = PathUtilities.NormalizeAssetName("Mods/RainObelisk/Default"),
+                BuildCondition = "LOCATION_RAIN_TOTEM_ALLOWED Target",
                 Builder = "Wizard",
                 BuildCost = 500_000,
                 BuildMaterials = new()
@@ -47,9 +49,17 @@ namespace RainObelisk
                 DefaultAction = "UseRainObelisk"
             });
         }
-        public bool SetRain(GameLocation where, Vector2 pos)
+        private bool RainTotemAllowedHere(string[] split)
+        {
+            return split.Length <= 1 || (GameStateQuery.GetLocation(split[1])?.GetLocationContext()?.AllowRainTotem ?? true);
+        } 
+        private bool SetRain(GameLocation where, Vector2 pos)
         {
             var context = where.GetLocationContext();
+
+            if (!context.AllowRainTotem)
+                return false;
+
             if (context == GameLocation.LocationContext.Default)
             {
                 if (!Utility.isFestivalDay(Game1.dayOfMonth + 1, Game1.currentSeason))
